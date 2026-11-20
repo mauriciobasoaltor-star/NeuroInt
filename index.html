@@ -2786,8 +2786,21 @@
                         <h4 class="text-lg font-extrabold text-slate-900">${tituloSeccion}</h4>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        ${items.map(act => `
-                            <a href="${act.archivo === '#vista-modulo-pastillero-recados' ? 'javascript:void(0)' : act.archivo === '#vista-modulo-heminegligencia-abvd' ? 'javascript:void(0)' : cat_construirEnlaceExterno(act.archivo)}" ${act.archivo === '#vista-modulo-pastillero-recados' ? 'onclick="eje_abrirModulo()"' : act.archivo === '#vista-modulo-heminegligencia-abvd' ? 'onclick="hmn_abrirModulo()"' : ''} class="btn-touch p-5 rounded-2xl border-2 border-slate-200 hover:border-sage bg-slate-50/60 hover:bg-teal-50/40 flex flex-col justify-between transition">
+                        ${items.map(act => {
+                            const esEje = act.archivo === '#vista-modulo-pastillero-recados';
+                            const esHmn = act.archivo === '#vista-modulo-heminegligencia-abvd';
+                            const esAvd = act.archivo === '#vista-modulo-avd-hogar';
+                            const esInterno = esEje || esHmn || esAvd;
+                            const hrefAttr = esInterno ? 'javascript:void(0)' : cat_construirEnlaceExterno(act.archivo);
+                            const clickAttr = esEje
+                                ? 'onclick="eje_abrirModulo()"'
+                                : esHmn
+                                    ? 'onclick="hmn_abrirModulo()"'
+                                    : esAvd
+                                        ? 'onclick="avd_abrirModulo()"'
+                                        : '';
+                            return `
+                            <a href="${hrefAttr}" ${clickAttr} class="btn-touch p-5 rounded-2xl border-2 border-slate-200 hover:border-sage bg-slate-50/60 hover:bg-teal-50/40 flex flex-col justify-between transition">
                                 <div>
                                     <div class="flex items-center justify-between gap-2 mb-1.5">
                                         <span class="font-bold text-petrol text-base">${act.titulo}</span>
@@ -2796,12 +2809,8 @@
                                     <p class="text-xs text-slate-600">${act.descripcion}</p>
                                 </div>
                             </a>
-                        `).join('')}
-                    </div>
-                `;
-            });
-        }
-
+                        `;
+                        }).join('')}
         // =========================================================================
         // PANEL CLÍNICO (PREFIJO cli_)
         // =========================================================================
