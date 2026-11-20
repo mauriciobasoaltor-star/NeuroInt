@@ -1668,7 +1668,75 @@
             </div>
         </section>
 
-    </main>
+    <!-- =====================================================================
+             10. MÓDULO SPA: SIMULADOR DE AUTONOMÍA EN EL HOGAR (PREFIJO avd_)
+        ====================================================================== -->
+        <section id="vista-modulo-avd-hogar" class="vista-spa select-none">
+            <div class="max-w-6xl mx-auto space-y-5">
+                <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-5 md:p-6 flex flex-wrap items-center justify-between gap-4">
+                    <div>
+                        <span class="text-xs font-bold uppercase tracking-wider text-petrol">Autonomía Doméstica · AVD / AIVD</span>
+                        <h2 class="text-2xl font-extrabold text-slate-900">Simulador de Autonomía en el Hogar</h2>
+                        <p id="avd-paciente-contexto" class="text-xs text-slate-500 font-semibold mt-0.5">Paciente activo: —</p>
+                    </div>
+                    <div class="flex items-center gap-2.5">
+                        <button type="button" onclick="avd_reiniciar()" class="btn-touch px-4 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs">
+                            ↺ Reiniciar
+                        </button>
+                        <button type="button" onclick="volverAlInicio()" class="btn-touch px-5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-sm">
+                            ← Volver al Inicio
+                        </button>
+                    </div>
+                </div>
+
+                <div id="avd-feedback" class="rounded-2xl px-5 py-4 bg-teal-50 border-2 border-teal-200 text-petrol font-bold text-sm flex items-center justify-between gap-3">
+                    <span id="avd-feedback-texto">Analice cada situación doméstica y seleccione la conducta segura y funcional.</span>
+                    <span id="avd-progreso-badge" class="px-3 py-1 rounded-xl bg-white text-xs font-extrabold text-petrol border border-teal-200 shrink-0">0 / 4 resueltos</span>
+                </div>
+
+                <div id="avd-escenarios-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+
+                <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="rounded-2xl bg-slate-50 border border-slate-200 p-4 text-center">
+                            <span class="text-xs font-bold text-slate-500 block">Puntaje Autonomía</span>
+                            <span id="avd-m-puntaje" class="text-2xl font-black text-petrol">0%</span>
+                        </div>
+                        <div class="rounded-2xl bg-slate-50 border border-slate-200 p-4 text-center">
+                            <span class="text-xs font-bold text-slate-500 block">Decisiones Seguras</span>
+                            <span id="avd-m-aciertos" class="text-2xl font-black text-sage-dark">0 / 4</span>
+                        </div>
+                        <div class="rounded-2xl bg-slate-50 border border-slate-200 p-4 text-center">
+                            <span class="text-xs font-bold text-slate-500 block">Conductas de Riesgo</span>
+                            <span id="avd-m-errores" class="text-2xl font-black text-rose-700">0</span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Nivel de Apoyo Requerido</label>
+                            <select id="avd-apoyo" class="w-full p-3 rounded-xl border border-slate-300 bg-white text-sm font-bold">
+                                <option value="Independiente">Independiente</option>
+                                <option value="Supervisión">Supervisión</option>
+                                <option value="Apoyo Verbal">Apoyo Verbal</option>
+                                <option value="Apoyo Visual-Gestual">Apoyo Visual-Gestual</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="avd-obs" class="block text-xs font-bold text-slate-700 mb-1">Observaciones Clínicas en Hogar</label>
+                            <input type="text" id="avd-obs" placeholder="Juicio de seguridad, manejo de dinero, planificación..." class="w-full p-3 rounded-xl border border-slate-300 text-sm">
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between pt-2">
+                        <span id="avd-estado-guardado" class="px-3.5 py-1.5 rounded-full bg-slate-100 text-slate-700 font-bold text-xs">Pendiente de guardar</span>
+                        <button type="button" onclick="avd_guardarEnFichaActiva()" class="btn-touch px-7 rounded-2xl bg-sage hover:bg-sage-dark text-white font-extrabold text-sm shadow-md">
+                            💾 Guardar en Ficha del Paciente
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
 
     <!-- =========================================================================
          LÓGICA DE ARQUITECTURA SPA, CONTROL DE ROLES Y MÓDULOS CLÍNICOS
