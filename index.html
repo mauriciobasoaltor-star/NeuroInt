@@ -4971,6 +4971,191 @@
             }
             mostrarToast(`Registro de ABVD y exploración guardado en la ficha de ${pac.nombre} (${m.puntaje}%).`);
         }
+        // =========================================================================
+        // MÓDULO SPA: SIMULADOR DE AUTONOMÍA EN EL HOGAR (PREFIJO avd_)
+        // =========================================================================
+        const AVD_ESCENARIOS = [
+            {
+                id: 'cocina_seguridad',
+                area: '1. Cocina y Seguridad Térmica',
+                consigna: 'El mango de la sartén con aceite caliente sobresale hacia el borde de la cocina. ¿Cuál es la acción segura?',
+                opciones: [
+                    { texto: 'Girar el mango hacia adentro del mesón y usar hornilla trasera', correcta: true },
+                    { texto: 'Dejarlo hacia afuera para alcanzarlo más rápido', correcta: false },
+                    { texto: 'Apagar la luz de la cocina mientras se fríe', correcta: false }
+                ]
+            },
+            {
+                id: 'prevencion_caidas',
+                area: '2. Prevención de Caídas en el Baño',
+                consigna: 'El piso del baño tiene agua derramada antes de entrar a la ducha. ¿Qué debe hacer primero?',
+                opciones: [
+                    { texto: 'Secar el piso y verificar alfombra antideslizante antes de avanzar', correcta: true },
+                    { texto: 'Caminar rápido apoyándose en la cortina de baño', correcta: false },
+                    { texto: 'Entrar con calcetines para no sentir el frío', correcta: false }
+                ]
+            },
+            {
+                id: 'manejo_dinero',
+                area: '3. Manejo de Dinero y Compras',
+                consigna: 'Compra pan y fruta por $3.650 y paga con un billete de $5.000. ¿Cuánto vuelto exacto debe verificar?',
+                opciones: [
+                    { texto: '$1.350', correcta: true },
+                    { texto: '$2.350', correcta: false },
+                    { texto: '$1.650', correcta: false }
+                ]
+            },
+            {
+                id: 'seguridad_electrica',
+                area: '4. Electrodomésticos y Cierre del Hogar',
+                consigna: 'Terminó de preparar el desayuno en el hervidor y va a salir al control médico. ¿Qué secuencia corresponde?',
+                opciones: [
+                    { texto: 'Desenchufar hervidor, revisar llave de gas y llevar llaves/carnet', correcta: true },
+                    { texto: 'Dejar el hervidor encendido para tener agua lista al volver', correcta: false },
+                    { texto: 'Salir sin revisar el gas para ahorrar tiempo', correcta: false }
+                ]
+            }
+        ];
+
+        let avd_estado = {
+            inicioMs: Date.now(),
+            resueltos: {},
+            errores: 0
+        };
+
+        function avd_abrirModulo() {
+            const pac = ficha_obtenerPacienteActivo();
+            if (!pac) {
+                mostrarToast('No hay un perfil de paciente activo seleccionado.', 'error');
+                return;
+            }
+            avd_estado = { inicioMs: Date.now(), resueltos: {}, errores: 0 };
+            const ctxEl = document.getElementById('avd-paciente-contexto');
+            if (ctxEl) {
+                ctxEl.textContent = `Paciente activo: ${pac.nombre} (${pac.id}) · Dx: ${pac.diagnostico || 'No registrado'} · Hemisferio/Lado: ${pac.hemisferio || 'No aplica'}`;
+            }
+            const badge = document.getElementById('avd-estado-guardado');
+            if (badge) {
+                badge.textContent = 'Pendiente de guardar';
+                badge.className = 'px-3.5 py-1.5 rounded-full bg-slate-100 text-slate-700 font-bold text-xs';
+            }
+            avd_renderizar();
+            cambiarVista('vista-modulo-avd-hogar');
+        }
+
+        function avd_reiniciar() {
+            avd_estado = { inicioMs: Date.now(), resueltos: {}, errores: 0 };
+            avd_renderizar();
+            const fb = document.getElementById('avd-feedback-texto');
+            if (fb) fb.textContent = 'Simulador reiniciado. Seleccione la conducta segura en cada escenario.';
+        }
+
+        function avd_renderizar() {
+            const grid = document.getElementById('avd-escenarios-grid');
+            if (!grid) return;
+
+            grid.innerHTML = AVD_ESCENARIOS.map(esc => {
+                const completado = avd_estado.resueltos[esc.id] === true;
+                return `
+                    <div class="rounded-3xl border-2 ${completado ? 'border-emerald-400 bg-emerald-50/30' : 'border-slate-200 bg-white'} p-5 flex flex-col justify-between gap-4 shadow-sm">
+                        <div>
+                            <div class="flex items-center justify-between gap-2 mb-1.5">
+                                <span class="text-xs font-extrabold uppercase text-petrol">${esc.area}</span>
+                                <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold ${completado ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'}">
+                                    ${completado ? '✓ Resuelto' : 'Pendiente'}
+                                </span>
+                            </div>
+                            <p class="text-sm font-bold text-slate-900">${esc.consigna}</p>
+                        </div>
+                        <div class="space-y-2">
+                            ${esc.opciones.map((op, idx) => `
+                                <button type="button" ${completado ? 'disabled' : ''} onclick="avd_responder('${esc.id}', ${idx})"
+                                    class="btn-touch w-full text-left p-3 rounded-xl border-2 text-xs font-bold transition ${
+                                        completado && op.correcta
+                                            ? 'bg-emerald-600 text-white border-emerald-600'
+                                            : completado
+                                                ? 'opacity-40 bg-slate-100 border-slate-200 text-slate-500'
+                                                : 'bg-slate-50 hover:bg-teal-50 border-slate-200 hover:border-petrol text-slate-800'
+                                    }">
+                                    ${op.texto}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            const aciertos = Object.values(avd_estado.resueltos).filter(Boolean).length;
+            const total = AVD_ESCENARIOS.length;
+            const puntaje = Math.max(0, Math.min(100, Math.round((aciertos / total) * 100 - avd_estado.errores * 8)));
+
+            const badgeProg = document.getElementById('avd-progreso-badge');
+            if (badgeProg) badgeProg.textContent = `${aciertos} / ${total} resueltos`;
+            const mPunt = document.getElementById('avd-m-puntaje');
+            if (mPunt) mPunt.textContent = `${puntaje}%`;
+            const mAci = document.getElementById('avd-m-aciertos');
+            if (mAci) mAci.textContent = `${aciertos} / ${total}`;
+            const mErr = document.getElementById('avd-m-errores');
+            if (mErr) mErr.textContent = String(avd_estado.errores);
+        }
+
+        function avd_responder(escId, opIdx) {
+            const esc = AVD_ESCENARIOS.find(e => e.id === escId);
+            if (!esc) return;
+            const op = esc.opciones[opIdx];
+            const fb = document.getElementById('avd-feedback-texto');
+
+            if (op && op.correcta) {
+                avd_estado.resueltos[escId] = true;
+                if (fb) fb.textContent = `✓ Conducta segura validada en "${esc.area}".`;
+                mostrarToast(`Conducta segura registrada en ${esc.area}.`);
+            } else {
+                avd_estado.errores++;
+                if (fb) fb.textContent = `⚠️ Esa acción implica riesgo doméstico o error de cálculo. Revise otra alternativa.`;
+                mostrarToast('Conducta de riesgo detectada. Intente nuevamente.', 'error');
+            }
+            avd_renderizar();
+        }
+
+        function avd_guardarEnFichaActiva() {
+            const pac = ficha_obtenerPacienteActivo();
+            if (!pac) return;
+
+            const aciertos = Object.values(avd_estado.resueltos).filter(Boolean).length;
+            const total = AVD_ESCENARIOS.length;
+            const puntaje = Math.max(0, Math.min(100, Math.round((aciertos / total) * 100 - avd_estado.errores * 8)));
+            const duracionSeg = Math.max(1, Math.round((Date.now() - avd_estado.inicioMs) / 1000));
+
+            const registro = {
+                fecha: new Date().toISOString(),
+                modulo: 'Simulador de Autonomía en el Hogar (AVD)',
+                puntaje,
+                aciertos,
+                totalEscenarios: total,
+                errores: avd_estado.errores,
+                duracionSeg,
+                nivelApoyo: document.getElementById('avd-apoyo')?.value || 'Independiente',
+                observaciones: (document.getElementById('avd-obs')?.value || '').trim()
+            };
+
+            const db = ficha_obtenerDB();
+            const idx = db.findIndex(p => p.id === pac.id);
+            if (idx !== -1) {
+                db[idx].evaluaciones = db[idx].evaluaciones || {};
+                db[idx].evaluaciones.avdHogar = db[idx].evaluaciones.avdHogar || [];
+                db[idx].evaluaciones.avdHogar.push(registro);
+                db[idx].actualizadoEn = new Date().toISOString();
+                ficha_guardarDB(db);
+            }
+
+            int_registrarActividad('Funcional/AVD', `Simulador Hogar AVD (${puntaje}%, ${aciertos}/${total})`);
+            const badge = document.getElementById('avd-estado-guardado');
+            if (badge) {
+                badge.textContent = '✓ Guardado en ficha';
+                badge.className = 'px-3.5 py-1.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-xs';
+            }
+            mostrarToast(`Simulación AVD guardada en la ficha de ${pac.nombre} (${puntaje}%).`);
+        }
     </script>
 </body>
 </html>
